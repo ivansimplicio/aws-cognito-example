@@ -1,5 +1,6 @@
 import type { AWS } from '@serverless/typescript';
 
+import signup from '@functions/signup';
 import hello from '@functions/hello';
 
 const serverlessConfiguration: AWS = {
@@ -14,12 +15,31 @@ const serverlessConfiguration: AWS = {
       shouldStartNameWithService: true,
     },
     environment: {
+      user_pool_id: {
+        Ref: "UserPool"
+      },
+      client_id: {
+        Ref: "UserClient"
+      },
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
     },
+    iamRoleStatements: [
+      {
+        Effect: "Allow",
+        Action: [
+          "cognito-idp:AdminInitiateAuth",
+          "cognito-idp:AdminCreateUser",
+          "cognito-idp:AdminSetUserPassword"
+        ],
+        Resource: [
+          "*"
+        ]
+      }
+    ],
   },
   // import the function via paths
-  functions: { hello },
+  functions: { signup, hello },
   package: { individually: true },
   custom: {
     esbuild: {
@@ -32,6 +52,46 @@ const serverlessConfiguration: AWS = {
       platform: 'node',
       concurrency: 10,
     },
+  },
+  resources: {
+    Resources: {
+      UserPool: {
+        Type: "AWS::Cognito::UserPool",
+        Properties: {
+          UserPoolName: "aws-cognito-example-pool",
+          Schema: [
+            {
+              Name: "email",
+              Required: true,
+              Mutable: true
+            }
+          ],
+          Policies: {
+            PasswordPolicy: {
+              MinimumLength: 8
+            }
+          },
+          AutoVerifiedAttributes: [
+            "email"
+          ]
+        }
+      },
+      UserClient: {
+        Type: "AWS::Cognito::UserPoolClient",
+        Properties: {
+          ClientName: "user-pool-ui",
+          GenerateSecret: false,
+          UserPoolId: {
+            Ref: "UserPool"
+          },
+          AccessTokenValidity: 5,
+          IdTokenValidity: 5,
+          ExplicitAuthFlows: [
+            "ADMIN_NO_SRP_AUTH"
+          ]
+        }
+      }
+    }
   },
 };
 
