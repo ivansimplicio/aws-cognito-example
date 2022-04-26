@@ -3,6 +3,7 @@ import type { AWS } from '@serverless/typescript';
 import signup from '@functions/signup';
 import login from '@functions/login';
 import hello from '@functions/hello';
+import welcome from '@functions/welcome';
 
 const serverlessConfiguration: AWS = {
   service: 'aws-cognito-example',
@@ -40,7 +41,7 @@ const serverlessConfiguration: AWS = {
     ],
   },
   // import the function via paths
-  functions: { signup, login, hello },
+  functions: { signup, login, hello, welcome },
   package: { individually: true },
   custom: {
     esbuild: {
